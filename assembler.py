@@ -52,7 +52,7 @@ class Assembler:
         elif l[0] == OPType.STR:
             s = re.findall('"([^"]*)"', line)[0] + '\0'
             self.static_strs[self.last_static] = s
-            self.label_tbl[l[1]] = self.last_static
+            self.label_tbl[l[1]] = self.IP #self.last_static #was
             c[1] = self.last_static
             self.last_static += len(s)
         elif l[0] == OPType.WRITESTR:
@@ -90,7 +90,7 @@ class Assembler:
         for address, s in sorted(self.static_strs.items(), key=lambda x: x[0]):
             for c in s:
                 print(c, c.encode('utf-8'), ord(c.encode('utf-8')))
-                self.code.append([0, 0, ord(c.encode('utf-8'))])
+                self.code.append([OPType.STR.value, 0, ord(c.encode('utf-8'))])
 
         with open(outf_name, 'wb') as outf:
             for c in self.code:

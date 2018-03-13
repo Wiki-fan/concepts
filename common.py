@@ -1,5 +1,8 @@
 from enum import Enum
 
+import logging as log
+log.basicConfig(level=log.INFO)
+
 MEM_SIZE = 1000
 
 

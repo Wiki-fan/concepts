@@ -1,8 +1,6 @@
 from common import *
 
 import struct
-import logging as log
-log.basicConfig(level=log.INFO)
 
 import re
 import codecs
@@ -138,7 +136,7 @@ class VM:
                 pass
             elif l[0] == OPType.WRITESTR:
                 arr = []
-                ptr = c[1]
+                ptr = self.get_val(c[1], 1)
                 d = self.get_val(ptr)
                 while d != 0:
                     c = chr(d)

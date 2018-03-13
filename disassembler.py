@@ -7,7 +7,7 @@ class Disassembler:
         self.memory = []
         self.labels = {0: 'IP', 1: 'SP', 2: 'BP', 3: 'CFL'}
         self.commands = []
-        self.labels_count = {'VAR': 0, 'FUN': 0, 'LABEL': 0}
+        self.labels_count = {'VAR': 0, 'FUN': 0, 'LABEL': 0, 'STR':0}
 
     def get_next_name(self, prefix='VAR'):
         ret = "%s%d"%(prefix, self.labels_count[prefix])
@@ -30,22 +30,22 @@ class Disassembler:
             c = self.memory[ip]
 
             # Если дошли до раздела статических строк
-            if c[0] == 0 and c[1] == 0:
+            if c[0] == OPType.STR.value and c[1] == 0:
                 break
 
-            print(c)
+            log.debug(c)
             l = [None]*3
             l[0] = OPType(c[0])
             l = l[:get_num_operands(l[0]) + 1]
 
             if l[0] == OPType.VAR:
-                if ip > 3:
-                    self.labels[ip] = self.get_next_name()
-                    l[1] = self.labels[ip]
-                else:
-                    l[1] = self.labels[ip]
+                self.labels[ip] = self.get_next_name('VAR')
+                l[1] = self.labels[ip]
+
                 l[2] = int(c[2])
             elif l[0] == OPType.STR:
+                self.labels[ip] = self.get_next_name('STR')
+                l[1] = self.labels[ip]
                 arr = []
                 ptr = c[1]
                 d = self.memory[ptr][2]
@@ -60,6 +60,10 @@ class Disassembler:
                 l[1] = '"'+s+'"'
             elif l[0] == OPType.C2M:
                 l[1] = int(c[1])
+
+                if c[2] not in self.labels:
+                    self.labels[c[2]] = self.get_next_name('VAR')
+                l[2] = self.labels[c[2]]
             elif l[0] == OPType.CALL:
                 if c[1] not in self.labels:
                     self.labels[c[1]] = self.get_next_name('FUN')
@@ -74,7 +78,7 @@ class Disassembler:
                 if len(l) > 2:
                     l[2] = self.labels[c[2]]
 
-            if ip in self.labels:
+            if ip in self.labels and not l[0] == OPType.VAR and not l[0] == OPType.STR:
                 prefix = ':' + self.labels[ip] + ' '
             else:
                 prefix = ''
