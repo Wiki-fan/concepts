@@ -2,6 +2,7 @@ from enum import Enum
 
 MEM_SIZE = 1000
 
+
 def get_num_operands(op):
     if op in {OPType.VAR, OPType.M2M, OPType.C2M, OPType.EQ, OPType.ADD}:
         return 2
@@ -9,13 +10,16 @@ def get_num_operands(op):
         return 0
     else:
         return 1
+
+
 class OPType(Enum):
-    VAR = 0
+    VAR = 1
+    STR = 2
 
     READ = 5
     WRITE = 6
-    STOP = 7
-
+    WRITESTR = 7
+    STOP = 8
 
     M2M = 10  # memory to memory
     C2M = 11  # constant to memory
@@ -29,12 +33,7 @@ class OPType(Enum):
 
     CALL = 40
     RET = 41
-#
-# FIRST_ARG_REG = {OPType.READ, OPType.EQ, OPType.ADD, OPType.PUSH, OPType.POP, OPType.RTM, OPType.MOV}
-# SECOND_ARG_REG = {OPType.EQ, OPType.ADD, OPType.MOV, OPType.CTR}
-# FIRST_ARG_ADDR = {OPType.WRITE, OPType.IF, OPType.MTR, OPType.CALL}
-# SECOND_ARG_ADDR = {OPType.IF, OPType.RTM}
-# FIRST_ARG_CONST = {OPType.CTR}
+
 
 class Reg:
     IP = 0

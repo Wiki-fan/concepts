@@ -1,7 +1,28 @@
 from common import *
 
 import struct
-import logging
+import logging as log
+log.basicConfig(level=log.INFO)
+
+import re
+import codecs
+
+ESCAPE_SEQUENCE_RE = re.compile(r'''
+    ( \\U........      # 8-digit hex escapes
+    | \\u....          # 4-digit hex escapes
+    | \\x..            # 2-digit hex escapes
+    | \\[0-7]{1,3}     # Octal escapes
+    | \\N\{[^}]+\}     # Unicode characters by name
+    | \\[\\'"abfnrtv]  # Single-character escapes
+    )''', re.UNICODE | re.VERBOSE)
+
+
+def decode_escapes(s):
+    def decode_match(match):
+        return codecs.decode(match.group(0), 'unicode-escape')
+
+    return ESCAPE_SEQUENCE_RE.sub(decode_match, s)
+
 
 
 class VM:
@@ -24,14 +45,14 @@ class VM:
 
     def print_info(self):
         registers = [(self.labels[i], VM.decode(self.memory[i])[2]) for i in range(0, len(self.labels))]
-        print('Registers', registers)
+        log.debug('Registers', registers)
         stack_size = VM.decode(self.memory[Reg.SP])[2]
         if stack_size == 0:
             stack = []
         else:
             stack = list(map(lambda bytes: VM.decode(bytes), self.memory[-stack_size:]))
-        print('Stack', stack_size, stack)
-        print()
+        log.debug('Stack', stack_size, stack)
+        log.debug('\n')
 
     def load_file_to_mem(self, filename):
         with open(filename, 'rb') as f:
@@ -43,7 +64,6 @@ class VM:
                 i += 1
                 smth = f.read(6)
         self.PROGRAM_LEN = i
-        #self.print_memory()
 
     @staticmethod
     def decode(bytes):
@@ -65,21 +85,21 @@ class VM:
         self.memory[elem] = self.memory[MEM_SIZE - 1 - sp + 1]
 
     def get_val(self, i, pos=2):
-        # print(i, VM.decode(self.memory[i]))
         return VM.decode(self.memory[i])[pos]
 
     def exec(self, filename):
         self.load_file_to_mem(filename)
         i = 0
-        while i < 100:
+        while True:
             i += 1
             ip = VM.decode(self.memory[Reg.IP])[2]
             c = VM.decode(self.memory[ip])
-            print(c)
+            log.debug(c)
             l = [None]*3
             l[0] = OPType(c[0])
-            print(l[0])
+            log.debug(l[0])
             if l[0] == OPType.READ:
+                print('< ', end='')
                 d = int(input())
                 self.memory[c[1]] = VM.encode([0, 0, d])
             elif l[0] == OPType.WRITE:
@@ -111,18 +131,29 @@ class VM:
                     self.memory[Reg.IP] = VM.encode([0, 0, c[1]-1])
             elif l[0] == OPType.CALL:
                 self.push(Reg.IP)
-                # print('ip is', self.get_val(Reg.IP, 2))
-                # print('sp is', self.get_val(MEM_SIZE - 1 - Reg.SP, 2))
-                self.memory[Reg.IP] = VM.encode([0, 0, c[1] - 1]) #TODO: было -1
+                self.memory[Reg.IP] = VM.encode([0, 0, c[1] - 1])
             elif l[0] == OPType.VAR:
                 pass
+            elif l[0] == OPType.STR:
+                pass
+            elif l[0] == OPType.WRITESTR:
+                arr = []
+                ptr = c[1]
+                d = self.get_val(ptr)
+                while d != 0:
+                    c = chr(d)
+                    arr.append(c)
+                    ptr += 1
+                    d = self.get_val(ptr)
+                s = ''.join(arr)
+                print(decode_escapes(s))
             else:
                 raise Exception("Unknown operator %s"%l[0])
             self.memory[Reg.IP] = VM.encode([0, 0, self.get_val(Reg.IP) + 1])
             self.print_info()
 
-
 # vm = VM()
 # vm.exec('a.out')
 vm = VM({4: 'A', 5: 'B', 6: 'S1', 7: 'S2', 8: 'RETA'})
 vm.exec('a.out')
+

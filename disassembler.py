@@ -28,7 +28,12 @@ class Disassembler:
         ip = 4
         while ip < len(self.memory):
             c = self.memory[ip]
-            # print(c)
+
+            # Если дошли до раздела статических строк
+            if c[0] == 0 and c[1] == 0:
+                break
+
+            print(c)
             l = [None]*3
             l[0] = OPType(c[0])
             l = l[:get_num_operands(l[0]) + 1]
@@ -40,6 +45,19 @@ class Disassembler:
                 else:
                     l[1] = self.labels[ip]
                 l[2] = int(c[2])
+            elif l[0] == OPType.STR:
+                arr = []
+                ptr = c[1]
+                d = self.memory[ptr][2]
+                while d != 0:
+                    c = chr(d)
+                    #print(c)
+                    arr.append(c)
+                    ptr += 1
+                    d = self.memory[ptr][2]
+                s = ''.join(arr)
+                #print(s)
+                l[1] = '"'+s+'"'
             elif l[0] == OPType.C2M:
                 l[1] = int(c[1])
             elif l[0] == OPType.CALL:

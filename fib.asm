@@ -3,10 +3,14 @@ VAR B 0
 VAR S1 0
 VAR S2 0
 VAR RETA 0
+STR hello "I can compute n'th Fibonacci number. Which do you want?"
+WRITESTR hello
 READ A
 PUSH A
 CALL fib
 POP A
+STR answer "And the answer is: "
+WRITESTR answer
 WRITE A
 STOP
 :fib POP RETA
@@ -25,6 +29,8 @@ PUSH A
 CALL fib
 POP S1
 POP A
+C2M -1 B
+ADD A B
 PUSH S1
 PUSH A
 CALL fib
