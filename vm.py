@@ -152,6 +152,7 @@ class VM:
 
 # vm = VM()
 # vm.exec('a.out')
-vm = VM({4: 'A', 5: 'B', 6: 'S1', 7: 'S2', 8: 'RETA'})
+#vm = VM({4: 'A', 5: 'B', 6: 'S1', 7: 'S2', 8: 'RETA'})
+vm = VM()
 vm.exec('a.out')
 
