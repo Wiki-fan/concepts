@@ -4,41 +4,92 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <setjmp.h>
+#include <cassert>
 
 class BaseException {
+    virtual void msg() {
+        printf("I'm base\n");
+    }
 };
 
-class TestException: public BaseException {
-
+class TestException : public BaseException {
+    void msg() override {
+        printf("I'm test\n");
+    }
 };
 
-// if (1) нужно, чтобы потребовать то, чтобы дальше шёл обязательно блок.
+class Test2Exception : public BaseException {
+    void msg() override {
+        printf("I'm test2\n");
+    }
+};
+
+jmp_buf env;
+BaseException* current_exception_ptr = 0;
+
+// if (1) нужно, чтобы потребовать то, чтобы дальше шёл обязательно блок (или нет? кажется, макросы без этого не развёртываются)
 #define TRY \
+jmp_buf* prev_env = &env; \
 jmp_buf env; \
-int val=0; \
-val = setjmp (env); \
-if (val == 0) { \
+assert(*prev_env != env); \
+bool error_occured=0; \
+bool found = false; \
+error_occured = setjmp (env); \
+if (error_occured == 0) { \
     if (1)
 
-#define THROW(code) longjmp (env, code)
+#define THROW(exception_type) \
+current_exception_ptr = new exception_type(); \
+longjmp (env, 1)
 
 //if (val != 0) нужно, потому что надо выполнить и свой обработчик, и пользовательский.
 #define EXCEPT(e)\
     else {}\
 } else {\
-    printf("Error %d happened\n", e); \
+    printf("Error happened\n"); \
+    if (dynamic_cast<e*>(current_exception_ptr) != nullptr) { \
+        found = true; \
+        delete current_exception_ptr; \
+    } else { \
+        printf("Unwind\n"); \
+        longjmp(*prev_env, 1); \
+    }\
 }\
-if (val != 0)
+if (error_occured != 0 && found)
 
 int main() {
-    TRY {
+    /*TRY {
         int i = 12;
         printf("Hello world\n");
-        THROW(1);
-    } EXCEPT(1) {
-        printf("excepting Error 1\n"); \
-    };
+        THROW(TestException);
+    } EXCEPT(TestException) {
+        printf("exception Error 1\n");
+    }*/
 
+    /*TRY {
+        TRY {
+            int i = 12;
+            printf("Hello world\n");
+            THROW(TestException);
+        } EXCEPT(Test2Exception) {
+            printf("Test2Exception\n");
+        }
+    } EXCEPT(TestException) {
+        printf("TestException\n");
+    }*/
+
+    TRY {
+            TRY {
+                    int i = 12;
+                    printf("Hello world\n");
+                    THROW(Test2Exception);
+                } EXCEPT(Test2Exception) {
+                THROW(TestException);
+                printf("Test2Exception\n");
+            }
+        } EXCEPT(TestException) {
+        printf("TestException\n");
+    }
     return 0;
 }
 
