@@ -1,4 +1,4 @@
-#include "exceptions.h"
+#include "Exceptions.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,9 +36,6 @@ class Test2Object : public Object {
         printf("Destroying Test2Object\n");
     }
 };
-
-jmp_buf env;
-BaseException* current_exception_ptr = 0;
 
 void throwingFunc() {
     TestObject to;
@@ -90,9 +87,34 @@ int main() {
     TRY {
         Test2Object to2;
         printf("Hello world\n");
+        {
+            TestObject to;
+            THROW(TestException());
+        }
+    } EXCEPT(TestException, e,  {
+        printf("I see from here %s\n", e.msg().c_str());
+    })
+    printf("\n");
+    TRY {
+        Test2Object to2;
+        printf("Hello world\n");
         throwingFunc();
     } EXCEPT(TestException, e,  {
         printf("I see from here %s\n", e.msg().c_str());
+    })
+    printf("\n");
+    TRY {
+        Test2Object t2o;
+        TRY {
+            Test2Object t2o;
+            printf("Hello world\n");
+            throwingFunc();
+        } EXCEPT(Test2Exception, e, {
+            THROW(TestException);
+            printf("Test2Exception\n");
+        })
+    } EXCEPT(TestException, e, {
+        printf("TestException\n");
     })
     return 0;
 }
