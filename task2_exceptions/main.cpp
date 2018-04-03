@@ -37,6 +37,13 @@ class Test2Object : public Object {
     }
 };
 
+class ThrowingObject : public Object {
+ public:
+    ~ThrowingObject() {
+        THROW(TestException());
+    }
+};
+
 void throwingFunc() {
     TestObject to;
     THROW(TestException());
@@ -63,7 +70,7 @@ int main() {
         TRY {
             TestObject to;
             printf("Hello world\n");
-            THROW(TestException);
+            THROW(TestException());
         } EXCEPT(Test2Exception, e, {
             printf("Test2Exception\n");
         })
@@ -75,9 +82,9 @@ int main() {
         TRY {
             TestObject to;
             printf("Hello world\n");
-            THROW(Test2Exception);
+            THROW(Test2Exception());
         } EXCEPT(Test2Exception, e, {
-            THROW(TestException);
+            THROW(TestException());
             printf("Test2Exception\n");
         })
     } EXCEPT(TestException, e, {
@@ -110,11 +117,19 @@ int main() {
             printf("Hello world\n");
             throwingFunc();
         } EXCEPT(Test2Exception, e, {
-            THROW(TestException);
+            THROW(TestException());
             printf("Test2Exception\n");
         })
     } EXCEPT(TestException, e, {
         printf("TestException\n");
     })
+    printf("\n");
+    TRY {
+        ThrowingObject obj;
+        THROW(Test2Exception);
+    } EXCEPT(Test2Exception, e, {
+        printf("Exception while cleaning\n");
+    })
+
     return 0;
 }

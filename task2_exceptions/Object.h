@@ -17,10 +17,3 @@ class Object {
 
     virtual ~Object();
 };
-
-
-
-
-
-
-

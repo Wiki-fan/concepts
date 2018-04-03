@@ -15,3 +15,5 @@ class Destroyer {
 };
 
 extern Destroyer destroyer;
+extern bool isCleaningStack;
+extern bool isInException;

@@ -35,6 +35,11 @@ if (error_occured == 0) { \
 #define THROW(exception) \
 do{ \
 current_exception_ptr = new exception; \
+if (isCleaningStack && isInException >= 1) { \
+    printf("Throwing exception from destructor.\n"); \
+    exit(1); \
+} \
+++isInException; \
 destroyer.unwindFrame(); \
 longjmp (*env, 1); \
 } while(0)
@@ -48,6 +53,7 @@ longjmp (*env, 1); \
         debug(printf("Found error %s\n", e.msg().c_str())); \
         whattodo; \
         delete current_exception_ptr; \
+        isInException = 0; \
     } else { \
         debug(printf("Unwind\n")); \
         destroyer.unwindFrame(); \
@@ -56,6 +62,7 @@ longjmp (*env, 1); \
 }}
 //if (error_occured != 0 && found)
 
+// Not used.
 #define MAIN(args...) \
 main(args) { \
 jmp_buf env; \
@@ -64,4 +71,3 @@ if (error_occured != 0) { \
 printf("Found an exception not caught. Exiting."); \
 return 1; \
 }
-

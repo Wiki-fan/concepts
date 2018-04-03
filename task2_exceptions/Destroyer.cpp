@@ -2,6 +2,8 @@
 #include <cassert>
 
 extern std::stack<std::vector<Object*>> objects;
+bool isCleaningStack = false;
+bool isInException = false;
 
 void Destroyer::createFrame() {
     objects.emplace();
@@ -13,10 +15,12 @@ void Destroyer::createFrame() {
 }*/
 
 void Destroyer::unwindFrame() {
+    isCleaningStack = true;
     for (auto& obj: objects.top()) {
         obj->~Object();
     }
     objects.pop();
+    isCleaningStack = false;
 }
 
 Destroyer destroyer;
