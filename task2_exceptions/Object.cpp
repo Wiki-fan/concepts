@@ -13,8 +13,7 @@ static void* Object::operator new(size_t sz)
 Object::Object()
 {
     if (!onTheHeap) {
-        objects.top().push_back(this);
-        //destroyer.addObject(this);
+        destroyer.addObject(this);
     }
     onTheHeap = false;
 }

@@ -39,7 +39,6 @@ if (isCleaningStack && isInException >= 1) { \
     printf("Throwing exception from destructor.\n"); \
     exit(1); \
 } \
-++isInException; \
 destroyer.unwindFrame(); \
 longjmp (*env, 1); \
 } while(0)
@@ -60,7 +59,6 @@ longjmp (*env, 1); \
         longjmp(*prev_env, 1); \
     }\
 }}
-//if (error_occured != 0 && found)
 
 // Not used.
 #define MAIN(args...) \

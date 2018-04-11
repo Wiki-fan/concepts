@@ -2,14 +2,13 @@
 #include <stack>
 #include <vector>
 
-#include "Object.h"
-
+class Object;
 class Destroyer {
-
+    std::stack<std::vector<Object*>> objects;
  public:
     void createFrame();
 
-    //void addObject(Object* obj);
+    void addObject(Object* obj);
 
     void unwindFrame();
 };
