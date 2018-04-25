@@ -12,7 +12,7 @@ ObjToClassNameMap.insert(std::make_pair(reinterpret_cast<void*>(&OBJNAME), std::
 
 struct TypeInfo {
     TypeInfo() {}
-    TypeInfo(std::string name_, const char* parentNames_) : name(name_) {
+    TypeInfo(std::string name_, const char* parentNames_, int size_) : name(name_), size(size_) {
         std::string parentNamesStr(parentNames_);
         hash = name+"lol";
         std::replace( parentNamesStr.begin(), parentNamesStr.end(), ',', ' ');
@@ -30,6 +30,8 @@ struct TypeInfo {
     std::string name;
     std::string hash;
     std::vector<std::string> parentNames;
+    std::map<std::string, int> BaseNameToShiftMap;
+    int size;
 };
 
 extern std::map<void*, std::string> ObjToClassNameMap;
@@ -41,10 +43,22 @@ extern std::map<std::string, TypeInfo> TypeNameToTypeInfo;
 #define BEGIN_CLASS_DECLARATION
 #define DECLARE_CLASS(CLASSNAME) \
 if (TypeNameToTypeInfo.find(#CLASS) == TypeNameToTypeInfo.end()) {\
-    TypeNameToTypeInfo.insert(std::make_pair(#CLASS, TypeInfo(TypeInfo##CLASS::name, TypeInfo##CLASS::parentNames))); \
+    TypeNameToTypeInfo.insert(std::make_pair(#CLASS, \
+                              TypeInfo(TypeInfo##CLASS::name, \
+                              TypeInfo##CLASS::parentNames, \
+                              TypeInfo##CLASS::size))); \
 }
 
-#define END_CLASS_DECLARATION
+void walk(TypeInfo ti, int baseShift) {
+    int currentShift = baseShift;
+    for (int i = 0; i<ti.parentNames; ++i) {
+        BaseNameToShiftMap.insert(std::make_pair(ti.parentNames[i], currentShift));
+        currentShift += TypeNameToTypeInfo[ti.parentNames[i]].size;
+    }
+}
+
+#define END_CLASS_DECLARATION \
+
 
 #define CLASS(TYPENAME, ...) \
 struct TypeInfo##TYPENAME { \
@@ -52,6 +66,7 @@ struct TypeInfo##TYPENAME { \
     constexpr static char* name = #TYPENAME; \
     constexpr static char* hash = #TYPENAME "LOL"; \
     constexpr static char* parentNames = #__VA_ARGS__; \
+    constexpr static char* size = sizeof(TYPENAME); \
 }; \
 class TYPENAME __VA_OPT__(:) __VA_ARGS__
 

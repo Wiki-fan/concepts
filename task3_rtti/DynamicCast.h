@@ -11,6 +11,7 @@ void* processDynamicCast(TypeInfo& curType, TypeInfo targetType, void* obj) {
         return nullptr;
     }
 }
+
 #define DYNAMIC_CAST(TARGET_TYPE, OBJ_PTR) \
 reinterpret_cast<TARGET_TYPE*>(processDynamicCast( TYPEID(OBJ), TypeNameToTypeInfo[#TARGET_TYPE], reinterpret_cast<void*>(OBJ_PTR)))
 
