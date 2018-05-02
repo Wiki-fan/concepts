@@ -28,5 +28,5 @@ void* processDynamicCast(TypeInfo& targetType, void* obj) {
     if (mostDerivedTypeInfo.BaseNameToShiftMap.find(targetType.name) != mostDerivedTypeInfo.BaseNameToShiftMap.end()) {
         return reinterpret_cast<char*>(obj) + mostDerivedTypeInfo.BaseNameToShiftMap[targetType.name];
     }
-    assert(false);
+    return nullptr;
 }
