@@ -6,7 +6,11 @@
 
 
 #define CONSTRUCTOR(CLASS, ARGS...) \
-CLASS(ARGS) : vptr (&CLASS##vtbl)
+CLASS(ARGS) { \
+    vptr = &CLASS##vtbl;
+
+#define END_CONSTRUCTOR() }
+
 
 #define VIRTUAL_CLASS(CLASS) \
 struct CLASS; \
@@ -20,6 +24,8 @@ std::map<std::string, std::function<void(CLASS*)>> CLASS##vtbl; \
 struct CLASS : BASE { \
 std::map<std::string, std::function<void(CLASS*)>>* vptr;
 
+    //std::map<std::string, std::function<void(CLASS*)>>* vptr;
+
 #define END_CLASS() };
 
 #define VIRTUAL_METHOD(CLASS, METHOD) \
@@ -28,7 +34,8 @@ void CLASS##METHOD (CLASS* obj)
 VIRTUAL_CLASS(Base)
     int a;
 
-    CONSTRUCTOR(Base) {}
+    CONSTRUCTOR(Base)
+    END_CONSTRUCTOR()
 END_CLASS()
 
 //////////////
@@ -43,7 +50,9 @@ VIRTUAL_METHOD(Base, Both) {
 
 VIRTUAL_CLASS_DERIVED(Derived, Base)
     int b;
-    CONSTRUCTOR(Derived) {}
+    CONSTRUCTOR(Derived)
+        Base::vptr = reinterpret_cast<std::map<std::string, std::function<void(Base*)>>*>(vptr);
+    END_CONSTRUCTOR()
 END_CLASS()
 
 VIRTUAL_METHOD(Derived, Both) {
@@ -61,7 +70,9 @@ CLASS##vtbl.insert(std::make_pair(#METHOD, CLASS##METHOD));
 #define POPULATE_VTBL(CLASS, BASE) \
 for (auto&& iter = BASE##vtbl.begin(); iter != BASE##vtbl.end(); ++iter) { \
     std::string methodName = iter->first; \
+    std::cout <<"Method name " <<methodName <<std::endl; \
     if (CLASS##vtbl.find(methodName) == CLASS##vtbl.end()) { \
+        std::cout <<"OVERRIDE " <<methodName <<' ' <<#BASE <<std::endl; \
         CLASS##vtbl.insert(std::make_pair(methodName, BASE##vtbl[methodName])); \
     } \
 }
@@ -86,6 +97,7 @@ int main()
     Base* reallyDerived = reinterpret_cast<Base*>(&derived);
 
     VIRTUAL_CALL(&base, Both); // печатает “Base::Both a = 0”
+    VIRTUAL_CALL(&derived, OnlyBase);
     VIRTUAL_CALL(reallyDerived, Both); // печатает “Derived::Both b = 1”
     VIRTUAL_CALL(reallyDerived, OnlyBase);  // печатает “Base::OnlyBase”
     VIRTUAL_CALL(reallyDerived, OnlyDerived);
