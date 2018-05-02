@@ -9,6 +9,7 @@ struct TypeInfo;
 
 extern std::map<void*, std::string> ObjToClassNameMap;
 extern std::map<std::string, TypeInfo> TypeNameToTypeInfo;
+extern std::map<void*, void*> PtrToMostDerivedPtr;
 
 struct TypeInfo {
     TypeInfo() {}
@@ -55,9 +56,13 @@ struct TypeInfo {
     int size;
 };
 
+void PopulatePtrs(TypeInfo& ti, void* ths);
+
 #define CONSTRUCTOR(CLASS, ARGS...) \
 CLASS(ARGS) { \
-ObjToClassNameMap[reinterpret_cast<void*>(this)] = std::string(#CLASS);
+ObjToClassNameMap[reinterpret_cast<void*>(this)] = std::string(#CLASS); \
+PopulatePtrs(TypeNameToTypeInfo[#CLASS], this);
+
 #define CONSTRUCTOR_END() }
 
 
