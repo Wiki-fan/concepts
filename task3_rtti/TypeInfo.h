@@ -4,6 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include <sstream>
+#include <utility>
 
 struct TypeInfo;
 
@@ -15,7 +16,7 @@ struct TypeInfo {
     TypeInfo() {}
     TypeInfo(std::string name_, const char* parentNames_, int size_) : name(name_), size(size_) {
         std::string parentNamesStr(parentNames_);
-        hash = name+"lol";
+        hash = std::hash<std::string>()(name);
         std::replace( parentNamesStr.begin(), parentNamesStr.end(), ',', ' ');
         std::istringstream iss(parentNamesStr);
         int i = 0;
@@ -73,7 +74,6 @@ struct TYPENAME __VA_OPT__(:) __VA_ARGS__ {
 struct TypeInfo##TYPENAME { \
     int index; \
     constexpr static char* name = #TYPENAME; \
-    constexpr static char* hash = #TYPENAME "LOL"; \
     constexpr static char* parentNames = #__VA_ARGS__; \
     constexpr static long size = sizeof(TYPENAME); \
 };

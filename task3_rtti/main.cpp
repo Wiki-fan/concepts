@@ -37,14 +37,11 @@ int main() {
     Base1 b1;
     Derived d;
     Base* polymorphic = (Base*)&d;
-    std::cout <<TYPEINFO(Derived)::hash <<std::endl;
-    std::cout <<TYPEID(&b1).hash <<std::endl;
-    std::cout <<TYPEID(&d).hash <<std::endl;
+    std::cout <<TYPEINFO(Derived)::name <<std::endl;
+    std::cout <<TYPEID(&b1).name <<TYPEID(&b1).hash <<std::endl;
+    std::cout <<TYPEID(&d).name <<TYPEID(&d).hash <<std::endl;
 
     auto cast1 = DYNAMIC_CAST(Base1, &d);
     auto cast2 = DYNAMIC_CAST(Base1, polymorphic);
-    /*Test* t1_ptr = &t1;
-    DYNAMIC_CAST(Test, t1_ptr);*/
-    //std::cout << DYNAMIC_CAST(Test, t1_ptr) <<std::endl;
     return 0;
 }
