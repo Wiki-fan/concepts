@@ -9,7 +9,7 @@ void walk(TypeInfo ti, int baseShift);
 void* processDynamicCast(TypeInfo& curType, TypeInfo targetType, void* obj);
 
 #define DYNAMIC_CAST(TARGET_TYPE, OBJ_PTR) \
-reinterpret_cast<TARGET_TYPE*>(processDynamicCast( TYPEID(OBJ), TypeNameToTypeInfo[#TARGET_TYPE], reinterpret_cast<void*>(OBJ_PTR)))
+reinterpret_cast<TARGET_TYPE*>(processDynamicCast( TYPEID(OBJ_PTR), TypeNameToTypeInfo[#TARGET_TYPE], reinterpret_cast<void*>(OBJ_PTR)))
 
 /*std::string typeName = #TARGET_TYPE; \
 TypeInfo curType = TYPEID(OBJ); \

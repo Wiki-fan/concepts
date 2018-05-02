@@ -5,6 +5,11 @@
 #include <algorithm>
 #include <sstream>
 
+struct TypeInfo;
+
+extern std::map<void*, std::string> ObjToClassNameMap;
+extern std::map<std::string, TypeInfo> TypeNameToTypeInfo;
+
 struct TypeInfo {
     TypeInfo() {}
     TypeInfo(std::string name_, const char* parentNames_, int size_) : name(name_), size(size_) {
@@ -16,11 +21,24 @@ struct TypeInfo {
         do {
             std::string subs;
             iss >> subs;
-            if (i%2==1) {
+            if (subs != "") {
                 parentNames.push_back(subs);
             }
             ++i;
         } while (iss);
+
+        int currentShift = 0;
+        BaseNameToShiftMap.emplace(name, currentShift);
+        for (auto& parentName: parentNames) {
+            for (auto& p: TypeNameToTypeInfo[parentName].BaseNameToShiftMap) {
+                if (BaseNameToShiftMap.find(p.first) != BaseNameToShiftMap.end()) {
+                    throw "Ambiguous base type";
+                } else {
+                    BaseNameToShiftMap.emplace(p.first, p.second+currentShift);
+                }
+            }
+            currentShift += TypeNameToTypeInfo[parentName].size;
+        }
     }
 
     bool operator==(const TypeInfo& other) {
@@ -36,9 +54,6 @@ struct TypeInfo {
     std::map<std::string, int> BaseNameToShiftMap;
     int size;
 };
-
-extern std::map<void*, std::string> ObjToClassNameMap;
-extern std::map<std::string, TypeInfo> TypeNameToTypeInfo;
 
 #define CONSTRUCTOR(CLASS, ARGS...) \
 CLASS(ARGS) { \
@@ -60,12 +75,11 @@ struct TypeInfo##TYPENAME { \
 
 
 #define REGISTER_CLASS(CLASS) \
-if (TypeNameToTypeInfo.find(#CLASS) == TypeNameToTypeInfo.end()) {\
-    TypeNameToTypeInfo.insert(std::make_pair(#CLASS, \
-                              TypeInfo(TypeInfo##CLASS::name, \
-                              TypeInfo##CLASS::parentNames, \
-                              TypeInfo##CLASS::size))); \
-}
+TypeNameToTypeInfo.emplace(#CLASS, \
+                          TypeInfo(TypeInfo##CLASS::name, \
+                          TypeInfo##CLASS::parentNames, \
+                          TypeInfo##CLASS::size)); \
+
 
 #define TYPEID(OBJ) TypeNameToTypeInfo[ObjToClassNameMap[reinterpret_cast<void*>(OBJ)]]
 #define TYPEINFO(TYPE) TypeInfo##TYPE
