@@ -42,6 +42,12 @@ int main() {
     std::cout <<TYPEID(&d).name <<TYPEID(&d).hash <<std::endl;
 
     auto cast1 = DYNAMIC_CAST(Base1, &d);
+    std::cout <<cast1->b1a  <<' ' << cast1->b1b <<std::endl;
     auto cast2 = DYNAMIC_CAST(Base1, polymorphic);
+    std::cout <<cast2->b1a  <<' ' << cast2->b1b <<std::endl;
+
+    std::cout << DYNAMIC_CAST(Derived, &b1) << std::endl;
+    std::cout << &d << std::endl;
+    std::cout << DYNAMIC_CAST(Base2, cast1) << std::endl;
     return 0;
 }
