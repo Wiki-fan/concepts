@@ -2,38 +2,24 @@ class Linq:
     def __iter__(self):
         return self
 
-    # def __rshift__(self, other):
-    #     other.inp = self
-    #     return other
     def __rrshift__(self, other):
         self.inp = other
-        if hasattr(self, 'to'):
-            return self.to(self.inp)
-        else:
-            return self
+        return self
 
 
-class SequenceWrapper(Linq):
-    def __init__(self, sequence):
-        self.inp = iter(sequence)
+class LinqWrapper(Linq):
+    def __init__(self, generator, print_on_gen=False):
+        self.inp = iter(generator)
+        self.print_on_gen = print_on_gen
 
     def __next__(self):
         ret = next(self.inp)
-        print("Generated %s" % ret)
+        if self.print_on_gen:
+            print("Generated %s" % ret)
         return ret
 
 
-class GeneratorWrapper(Linq):
-    def __init__(self, generator):
-        self.inp = generator
-
-    def __next__(self):
-        ret = next(self.inp)
-        print("Generated %s" % ret)
-        return ret
-
-
-class Map(Linq):
+class Select(Linq):
     def __init__(self, map_expression):
         self.map_expression = map_expression
 
@@ -42,7 +28,32 @@ class Map(Linq):
         return self.map_expression(n)
 
 
-class Filter(Linq):
+class Flatten(Linq):
+
+    def flatten(self, x):
+        for y in iter(x):
+
+            try:
+                _ = iter(y)
+                is_iterable = True
+            except:
+                is_iterable = False
+
+            if is_iterable and not isinstance(y, str):
+                yield from self.flatten(y)
+            else:
+                yield y
+
+    def __next__(self):
+        return next(self.inp)
+
+    def __rrshift__(self, other):
+        self.inp = iter(self.flatten(other))
+
+        return self
+
+
+class Where(Linq):
     def __init__(self, filter_expression):
         self.filter_expression = filter_expression
 
@@ -66,33 +77,50 @@ class Take(Linq):
             raise StopIteration
 
 
-class Flatten:
+class GroupBy(Linq):
+    def __init__(self, key=lambda x: x):
+        self.key = key
+        self.groups = dict()
+
     def __next__(self):
-        elem = next(self.inp)
-        # TODO
+        return next(self.inp)
+
+    def __rrshift__(self, other):
+        self.inp = other
+
+        for elem in self.inp:
+            k = self.key(elem)
+            if k in self.groups:
+                self.groups[k].append(elem)
+            else:
+                self.groups[k] = [elem]
+
+        self.inp = iter(self.groups.items())
+        return self
+
+
+class OrderBy(Linq):
+    def __init__(self, key=lambda x: x, reverse=False):
+        self.key = key
+        self.reverse = reverse
+
+    def __next__(self):
+        return next(self.inp)
+
+    def __rrshift__(self, other):
+        self.inp = iter(sorted(other, key=self.key, reverse=self.reverse))
+
+        return self
+
+
 class ToList(Linq):
     def __init__(self):
-        self.to = list
+        super().__init__()
+        self.convert = list
 
-
-# temp = Range(range(1, 10))
-# print(list(temp))
-# while True:
-#     print(temp.__next__())
-
-# temp = Range(range(1, 10)) >> Filter(lambda x: x % 2 == 0)
-# print(list(temp))
-
-# temp = Range(range(10)) >> Filter(lambda x: x % 2 == 0) >> Map(lambda x: x**2) >> Take(2) >> ToList()
-# print(temp)
-
-temp = SequenceWrapper(range(10)) >> Filter(lambda x: x % 2 == 0) >> Map(lambda x: x**2) >> Take(2)
-print(temp.__next__())
-print(temp.__next__())
-try:
-    print(temp.__next__())
-except StopIteration:
-    print("End")
+    def __rrshift__(self, other):
+        self.inp = other
+        return self.convert(self.inp)
 
 
 def fibonacci_generator():
@@ -101,4 +129,7 @@ def fibonacci_generator():
         yield a
         a, b = b, a + b
 
-print(GeneratorWrapper(fibonacci_generator()) >> Take(10) >> ToList())
+
+def get_lines(filename):
+    with open(filename, "r") as f:
+        yield from f
